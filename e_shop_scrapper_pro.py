@@ -4,7 +4,6 @@ import pandas as pd
 import csv
 from tqdm import tqdm
 import subprocess
-from tabulate import tabulate
 import re, os
 import random
 from datetime import datetime, timedelta
@@ -230,7 +229,7 @@ for link in tqdm(productlinks, desc='Scraping Products'):
         category = last_a_tag.text.strip()
 
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error: {e}")@Richmonk5
         category = None
 
     # Create a dictionary to store the product data

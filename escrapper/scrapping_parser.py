@@ -5,6 +5,7 @@ This file contains the parsers that will check the different pages and then
 grab the equivalent data
 """
 
+from typing import Any, Dict, List, Tuple
 from bs4 import BeautifulSoup
 
 
@@ -25,8 +26,6 @@ class ParsePage:
                 price = price_element.find('bdi').text.strip()
                 return price
 
-            return None
-
         except Exception as e:
             print(f"Error: {e}")
         
@@ -42,32 +41,124 @@ class ParsePage:
         
         return None
 
+    def get_summary_section(self) -> str | None:
+        """Get the contents from the summary section"""
+        try:
+            summary_element = self.soup.find('div', class_='woocommerce-product-details__short-description')
+            summary = summary_element.decode_contents().strip() if summary_element else None
+            return summary
+        except Exception as e:
+            print(f"Error: {e}")
+        
+        return None
+
+    def get_sku(self) -> str | None:
+        """Get the SKU text from the product details"""
+        try:
+            sku = self.soup.find('span', class_='sku').text.strip()
+            return sku
+        except Exception as e:
+            print(f"Error: {e}")
+        
+        return None
 
 
-    def get_summary_section(self):
-        pass
+    def get_tags(self) -> List | None:
+        """Get the product tags"""
+        try:
+            categories_element = self.soup.find('span', class_='posted_in')
+            tags = [a.text for a in categories_element.find_all('a')]
+            return tags
 
-    def get_sku(self):
-        pass
+        except Exception as e:
+            print(f"Error: {e}")
+        
+        return None
 
-    def get_tags(self):
-        pass
+    def get_description_html(self) -> Any:
+        """Get the product description"""
+        try:
+            description_tab = self.soup.find('li', class_='description_tab')
+            
+            if not description_tab:
+                return None
 
-    def get_description_html(self):
-        pass
+            description_content = description_tab.find_next('div', class_='woocommerce-Tabs-panel')
+            
+            if not description_content:
+                return None
+            
+            return description_content.decode_contents()
 
-    def get_additional_information(self):
-        pass
+        except Exception as e:
+            print(f"Error: {e}")
+        
+        return None
 
-    def get_images(self):
-        pass
+    def get_additional_information(self) -> Dict | None:
+        """Get extra information about the product"""
+        try:
+            # Find the additional information tab
+            additional_info_tab = self.soup.find('li', class_='additional_information_tab')
+            
+            if additional_info_tab:
+                additional_info_content = additional_info_tab.find_next('div', class_='woocommerce-Tabs-panel').decode_contents()
 
-    def get_category(self):
-        pass
+                # Extract the attribute details from additional_info_content
+                additional_info_soup = BeautifulSoup(additional_info_content, 'html.parser')
+                attribute_elements = additional_info_soup.find_all('tr', class_='woocommerce-product-attributes-item')
+
+                attributes = {}
+                for attribute_element in attribute_elements:
+                    attribute_label = attribute_element.find('th', class_='woocommerce-product-attributes-item__label').text.strip()
+                    attribute_value = attribute_element.find('td', class_='woocommerce-product-attributes-item__value').text.strip()
+
+                    attributes[attribute_label] = attribute_value
+                
+                return attributes
+               
+        except Exception as e:
+            print(f"Error: {e}")
+        
+        return None
+
+    def get_images(self) -> Tuple[Any, Any] | None:
+        """Get featured images and gallery images for the products"""
+        try:
+            image_div = self.soup.find('div', class_='woocommerce-product-gallery')
+            image_tags = image_div.find_all('img')
+
+            featured_image = image_tags[0]['src'] if image_tags else None
+            gallery_images = [img['src'] for img in image_tags[1:]] if len(image_tags) > 1 else None
+            
+            return (featured_image, gallery_images)
+        except Exception as e:
+            print(f"Error: {e}")
+            
+        return None
 
 
+    def get_category(self) -> str | None:
+        """Get the category from the last anchor tag"""
+        try:
+            breadcrumb_nav = self.soup.find('nav', class_='woocommerce-breadcrumb')
+            last_a_tag = breadcrumb_nav.find_all('a')[-1]
 
-    def generate_slug_name(self):
-        pass
+            category = last_a_tag.text.strip()
+            return category
+        except Exception as e:
+            print(f"Error: {e}")
+
+        return None
 
 
+    def generate_slug_name(self, name: str):
+        """Generate the slug name from the product name"""
+        try:
+            slug = re.sub(r'\s+', '_', name).lower()
+            slug = re.sub(r'[^\w\s-]', '', slug)
+            return slug
+        except Exception as e:
+            print(f"Error: {e}")
+        
+        return None

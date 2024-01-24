@@ -80,4 +80,55 @@ import csv
 # Initialize the list to store product data
 data = []
 
+# Iterate through each product link
+    # Create a dictionary to store the product data
+    
+    # Append the product data to the list
+    data.append(product_data)
 
+# Specify the file name for the CSV file
+csv_file_name = 'rcfminibikes.csv'
+
+# Get the absolute path of the current working directory
+current_dir = os.getcwd()
+
+# Get the absolute path of the CSV file based on the current working directory
+csv_file_path = os.path.join(current_dir, csv_file_name)
+
+# Write the product data to a CSV file
+with open(csv_file_path, 'w', encoding='utf8', newline='') as f:
+    # Check if the data list is not empty
+    if data:
+        fc = csv.DictWriter(f, fieldnames=data[0].keys())
+        fc.writeheader()
+        
+        print('Now writing data to CVS file...')
+
+        # Use tqdm to track the progress of writing
+        progress_bar = tqdm(total=len(data), desc='Writing CSV')
+
+        for row in data:
+            fc.writerow(row)
+            progress_bar.update(1)
+
+        # Close the tqdm progress bar
+        progress_bar.close()
+    else:
+        print('No data available. CSV file not created.')
+
+# Open the CSV file after writing is done
+try:
+    if os.name == 'nt':  # Check if the system is Windows
+        os.startfile(csv_file_path)
+    elif os.name == 'posix':  # Check if the system is macOS or Linux
+        subprocess.call(['xdg-open', csv_file_path])
+    else:
+        print('Unable to open the CSV file. Please open it manually.')
+except:
+    print('Unable to open the CSV file. Please open it manually.')
+
+# Create a DataFrame from the product data
+df = pd.DataFrame(data)
+
+# Print the DataFrame
+print(df)

@@ -4,6 +4,7 @@ import pandas as pd
 import csv
 from tqdm import tqdm
 import subprocess
+from tabulate import tabulate
 import re, os
 import random
 from datetime import datetime, timedelta
@@ -100,7 +101,6 @@ for link in tqdm(productlinks, desc='Scraping Products'):
         price = None
 
     try:
-        # Extract the product name from the product details
         name = hun.find('h1', class_='product_title').text.strip()
         product_names.append(name)
 
@@ -205,6 +205,7 @@ for link in tqdm(productlinks, desc='Scraping Products'):
     try:
        
         image_div = hun.find('div', class_='woocommerce-product-gallery')
+        image_tags = image_div.find_all('img')
         image_tags = image_div.find_all('img')
 
         featured_image = image_tags[0]['src'] if image_tags else None

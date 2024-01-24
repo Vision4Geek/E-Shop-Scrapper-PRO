@@ -7,14 +7,30 @@ grab the equivalent data
 
 from typing import Any, Dict, List, Tuple
 from bs4 import BeautifulSoup
-
+import re
 
 class ParsePage:
     def __init__(self, html_soup: BeautifulSoup) -> None:
         self.soup = html_soup
 
-    def start_parsing(self):
-        pass
+    def start_parsing(self) -> Dict[str, Any]:
+        product_data = {
+            "post_title": self.get_product_name(),
+            "post_name": self.generate_slug_name(self.get_product_name()),
+            "post_content": self.get_description_html(),
+            "post_excerpt": self.get_summary_section(), 
+            "_sku": self.get_sku(),
+            "_regular_price": self.get_product_price(),
+            "images": self.get_images(),
+            "tax:product_cat": self.get_category(),
+            "tax:product_tag": ', '.join(self.get_tags()) if self.get_tags() else None,
+            "attribute": self.get_additional_information()["attribute"],
+            "attribute_data": self.get_additional_information()["attribute_data"],
+            "attribute_default": self.get_additional_information()["attribute_default"]
+        }
+
+        return product_data
+
 
     def get_product_price(self) -> str | None:
         """Get the product price from the product details"""
@@ -63,7 +79,7 @@ class ParsePage:
         return None
 
 
-    def get_tags(self) -> List | None:
+    def get_tags(self) -> List[str] | None:
         """Get the product tags"""
         try:
             categories_element = self.soup.find('span', class_='posted_in')

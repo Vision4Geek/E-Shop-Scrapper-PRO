@@ -7,3 +7,6 @@ def test_dummy():
     # this is a dummy test data
     parser = ParsePage(html_soup=BeautifulSoup())
     assert type(parser) == ParsePage
+
+    # Print the results
+    print("Parser instance created successfully:", parser)

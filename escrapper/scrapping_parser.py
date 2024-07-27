@@ -1,5 +1,3 @@
-# escrapper > main_scrapper.py
-
 """
 This file contains the parsers that will check the different pages and then
 grab the equivalent data
@@ -10,41 +8,36 @@ from bs4 import BeautifulSoup
 import re
 
 class ParsePage:
-    def __init__(self, html_soup: BeautifulSoup) -> None:
+    def __init__(self, html_soup) -> None:
         self.soup = html_soup
 
     def start_parsing(self) -> Dict[str, Any]:
-        product_data = {
-            "post_title": self.get_product_name(),
-            "post_name": self.generate_slug_name(self.get_product_name()),
-            "post_content": self.get_description_html(),
-            "post_excerpt": self.get_summary_section(), 
-            "_sku": self.get_sku(),
-            "_regular_price": self.get_product_price(),
-            "images": self.get_images(),
-            "tax:product_cat": self.get_category(),
-            "tax:product_tag": ', '.join(self.get_tags()) if self.get_tags() else None,
-            "attribute": self.get_additional_information()["attribute"],
-            "attribute_data": self.get_additional_information()["attribute_data"],
-            "attribute_default": self.get_additional_information()["attribute_default"]
-        }
-
-        return product_data
-
+        try:
+            product_data = {
+                "post_title": self.get_product_name(),
+                "post_name": self.generate_slug_name(self.get_product_name()),
+                "post_content": self.get_description_html(),
+                "post_excerpt": self.get_summary_section(), 
+                "_sku": None,
+                "_regular_price": self.get_product_price(),
+                "images": None,
+                "tax:product_cat": self.get_category(),
+                "tax:product_tag": None,
+            }
+            return product_data
+        except Exception as e:
+            print(f"Error while parsing: {e}")
+            return {}
 
     def get_product_price(self) -> str | None:
         """Get the product price from the product details"""
         try:
             price_element = self.soup.find('p', class_='price')
-
-            # Check if the price element exists and contains a valid price
-            if price_element and price_element.text.strip() != '':
+            if price_element:
                 price = price_element.find('bdi').text.strip()
                 return price
-
         except Exception as e:
-            print(f"Error: {e}")
-        
+            print(f"Error fetching product price: {e}")
         return None
 
     def get_product_name(self) -> str | None:
@@ -53,8 +46,7 @@ class ParsePage:
             name = self.soup.find('h1', class_='product_title').text.strip()
             return name
         except Exception as e:
-            print(f"Error: {e}")
-        
+            print(f"Error fetching product name: {e}")
         return None
 
     def get_summary_section(self) -> str | None:
@@ -64,7 +56,7 @@ class ParsePage:
             summary = summary_element.decode_contents().strip() if summary_element else None
             return summary
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Error fetching summary section: {e}")
         
         return None
 
@@ -74,7 +66,7 @@ class ParsePage:
             sku = self.soup.find('span', class_='sku').text.strip()
             return sku
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Error fetching SKU: {e}")
         
         return None
 
@@ -87,29 +79,30 @@ class ParsePage:
             return tags
 
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Error fetching TAGS: {e}")
         
         return None
+        
 
     def get_description_html(self) -> Any:
         """Get the product description"""
         try:
-            description_tab = self.soup.find('li', class_='description_tab')
-            
-            if not description_tab:
-                return None
-
-            description_content = description_tab.find_next('div', class_='woocommerce-Tabs-panel')
-            
-            if not description_content:
-                return None
-            
-            return description_content.decode_contents()
+            product_description = self.soup.find('div', class_=['woocommerce-Tabs-panel', 'woocommerce-Tabs-panel--description', 'panel entry-content'])
+            if product_description:
+                # Remove only the first <h2> tag from description
+                first_h2_tag = product_description.find('h2')
+                if first_h2_tag:
+                    first_h2_tag.decompose()
+                product_description = str(product_description)
+            else:
+                product_description = str(product_description)
 
         except Exception as e:
             print(f"Error: {e}")
         
-        return None
+            return None
+
+
 
     def get_additional_information(self) -> Dict | None:
         """Get extra information about the product"""
@@ -149,7 +142,7 @@ class ParsePage:
             
             return (featured_image, gallery_images)
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Error fetching iMAGES: {e}")
             
         return None
 
@@ -163,7 +156,7 @@ class ParsePage:
             category = last_a_tag.text.strip()
             return category
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Error fetching CATEGORY: {e}")
 
         return None
 
@@ -175,6 +168,6 @@ class ParsePage:
             slug = re.sub(r'[^\w\s-]', '', slug)
             return slug
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Error GENERATING SLUG: {e}")
         
         return None
